@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sse-starlette
+langchain
+langchain-core
+langgraph
+langchain-community
+langchain-openai
+dashscope
+pypdf
+pydantic-settings
+python-dotenv
+python-multipart
