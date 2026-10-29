@@ -11,7 +11,7 @@ def build_chat_model(platform: str, model: str | None = None, temperature: float
     对应 MorePlatformAndModelController 里 modelMap.get(platform) + 动态 options。
     """
     settings = get_settings()
-    platform = (platform or "dashscope").lower()
+    platform = (platform or "deepseek").lower()
 
     if platform == "deepseek":
         from langchain_openai import ChatOpenAI

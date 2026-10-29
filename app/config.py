@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     # 增量记忆保留条数（复刻 IncrementalChatMemory.lastN）
     memory_last_n: int = 10
 
+    # MySQL（历史消息持久化）
+    mysql_url: str = "mysql+pymysql://root:123456@localhost:3306/spring_ai?charset=utf8mb4"
+    mysql_chat_memory_table: str = "python_ai_chat_memory"
+
 
 @lru_cache
 def get_settings() -> Settings:

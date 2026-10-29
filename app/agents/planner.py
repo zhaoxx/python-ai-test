@@ -33,13 +33,13 @@ BOT_SYSTEM = "你是DF航空智能客服代理，请以友好、热情的服务�
 
 def _build_planner():
     settings = get_settings()
-    model = build_chat_model("dashscope", temperature=settings.planning_temperature)
+    model = build_chat_model("deepseek", temperature=settings.planning_temperature)
     return model.with_structured_output(AIJob)
 
 
 def _build_bot_chain():
     settings = get_settings()
-    model = build_chat_model("dashscope", temperature=settings.bot_temperature)
+    model = build_chat_model("deepseek", temperature=settings.bot_temperature)
     prompt = ChatPromptTemplate.from_messages(
         [("system", BOT_SYSTEM), ("placeholder", "{chat_history}"), ("human", "{input}")]
     )

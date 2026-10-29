@@ -8,12 +8,13 @@
 """
 from typing import AsyncIterator
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
 from app.config import get_settings
 from app.llm.providers import build_chat_model
+from app.memory.mysql_store import MySQLChatMessageHistory
 from app.tools.dynamic_tools import dynamic_tool_service
 
 SYSTEM_PROMPT = """您是电商平台的专属智能客服。请以友好、专业的语气回复。
@@ -28,7 +29,7 @@ _checkpointer = MemorySaver()
 
 def _build_agent():
     settings = get_settings()
-    model = build_chat_model("dashscope", temperature=settings.bot_temperature)
+    model = build_chat_model("deepseek", temperature=settings.bot_temperature)
     return create_react_agent(
         model=model,
         tools=dynamic_tool_service.get_tools(),
@@ -48,11 +49,28 @@ def get_agent():
 
 
 async def stream_chat(message: str, conversation_id: str) -> AsyncIterator[str]:
-    """对应 SmartCustomerService.chat 返回 Flux<String>。"""
+    """对应 SmartCustomerService.chat 返回 Flux<String>。
+
+    流程：
+    1) 把本轮 user / assistant 消息写入 MySQL（增量去重）
+    2) 用 LangGraph MemorySaver 驱动 ReAct Agent 流式产出
+    """
     agent = get_agent()
     config = {"configurable": {"thread_id": conversation_id}}
     inputs = {"messages": [HumanMessage(content=message)]}
+
+    history = MySQLChatMessageHistory(conversation_id)
+    user_msg = HumanMessage(content=message)
+    history.add_messages([user_msg])
+
+    chunks: list[str] = []
     async for chunk, _meta in agent.astream(inputs, config=config, stream_mode="messages"):
         text = getattr(chunk, "content", None)
         if text:
+            chunks.append(text)
             yield text
+
+    # 流结束后，将本轮完整 assistant 回复落库
+    full_reply = "".join(chunks)
+    if full_reply:
+        history.add_messages([AIMessage(content=full_reply)])

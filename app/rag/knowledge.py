@@ -24,7 +24,7 @@ _model = None
 def _get_model():
     global _model
     if _model is None:
-        _model = build_chat_model("dashscope", temperature=get_settings().knowledge_temperature)
+        _model = build_chat_model("deepseek", temperature=get_settings().knowledge_temperature)
     return _model
 
 
